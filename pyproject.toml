@@ -1,0 +1,16 @@
+[project]
+name = "2025-mujra"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "ipython>=9.2.0",
+    "matplotlib>=3.10.1",
+    "networkx>=3.4.2",
+    "qiskit<2.0.0",
+    "qiskit-aer>=0.17.0",
+    "qiskit-algorithms>=0.3.1",
+    "qiskit-optimization>=0.6.1",
+]
