@@ -103,6 +103,30 @@ const RainfallAlert = styled(motion.div)`
   text-align: center;
 `;
 
+const OptimizationAlert = styled(motion.div)`
+  position: fixed;
+  inset: 0; /* top:0, bottom:0, left:0, right:0 */
+  margin: auto;
+  min-width: 340px;
+  max-width: 40vw;
+  height: fit-content;
+  background: rgba(255, 255, 255, 0.95);
+  border-left: 8px solid ${colors.statusGood};
+  box-shadow: 0 12px 40px 0 rgba(0,0,0,0.35), 0 1.5px 8px 0 rgba(0,0,0,0.10);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 36px 28px 28px;
+  z-index: 9999;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${colors.statusGood};
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  gap: 18px;
+  text-align: center;
+`;
 
 const AlertIcon = styled.span`
   display: flex;
@@ -116,6 +140,20 @@ const AlertIcon = styled.span`
   font-size: 1.7rem;
   flex-shrink: 0;
   box-shadow: 0 2px 8px 0 rgba(255, 193, 7, 0.18);
+`;
+
+const SuccessIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${colors.statusGood};
+  color: #fff;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 1.7rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px 0 rgba(76, 175, 80, 0.18);
 `;
 
 // Add a backdrop overlay
@@ -342,6 +380,7 @@ function App() {
   const [showOptimizeButton, setShowOptimizeButton] = useState(false);
   const [isMapExpanded, setMapExpanded] = useState(false);
   const [showRainfallAlert, setShowRainfallAlert] = useState(false);
+  const [showOptimizationAlert, setShowOptimizationAlert] = useState(false);
 
   // Sample dynamic data for the map
   const initialNodes: SensorNode[] = [];
@@ -781,11 +820,112 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'j') {
+        // 1st: Show rainfall warning alert for 2 seconds
         setShowRainfallAlert(true);
-        // Hide the alert after 5 seconds
+        
+        // Make nodes and connections red (warning status) to show rainfall impact
+        setNodes(prevNodes => prevNodes.map(node => ({
+          ...node,
+          status: 'Warning'
+        })));
+        
+        setConnections(prevConnections => prevConnections.map(conn => ({
+          ...conn,
+          status: 'Warning'
+        })));
+        
+        // Increase risk percentage to show impact of rainfall
+        setRiskPercentage(prev => Math.min(85, prev + 30));
+        
+        // After 2 seconds, hide rainfall alert and show optimization alert
         setTimeout(() => {
           setShowRainfallAlert(false);
-        }, 5000);
+          
+          // 2nd: Show the quantum optimization success alert
+          setShowOptimizationAlert(true);
+          
+          // After 2 seconds, hide optimization alert
+          setTimeout(() => {
+            setShowOptimizationAlert(false);
+            
+            // 3rd: Wait 10s and turn everything green
+            setTimeout(() => {
+              // Set all nodes and connections to Normal (green)
+              setNodes(prevNodes => prevNodes.map(node => ({
+                ...node,
+                status: 'Normal'
+              })));
+              
+              setConnections(prevConnections => prevConnections.map(conn => ({
+                ...conn,
+                status: 'Normal'
+              })));
+              
+              // Decrease risk percentage dramatically to show impact of optimization
+              setRiskPercentage(prev => Math.max(10, prev - 50));
+            }, 10000); // 10 seconds wait
+          }, 2000); // 2 seconds for optimization alert
+        }, 2000); // 2 seconds for rainfall alert
+      }
+      
+      if (e.key.toLowerCase() === 'r') {
+        // Randomize the network slightly, not huge differences
+        setNodes(prevNodes => prevNodes.map(node => {
+          // 30% chance to change a node's status
+          if (Math.random() < 0.3) {
+            const statuses: SystemStatus[] = ['Normal', 'Warning', 'Critical'];
+            const weights = [0.6, 0.3, 0.1]; // Weighted probabilities
+            
+            // Select status based on weights
+            const rand = Math.random();
+            let cumulativeWeight = 0;
+            let selectedStatus = 'Normal' as SystemStatus;
+            
+            for (let i = 0; i < statuses.length; i++) {
+              cumulativeWeight += weights[i];
+              if (rand < cumulativeWeight) {
+                selectedStatus = statuses[i];
+                break;
+              }
+            }
+            
+            return {
+              ...node,
+              status: selectedStatus
+            };
+          }
+          return node;
+        }));
+        
+        // Also randomize connections
+        setConnections(prevConnections => prevConnections.map(conn => {
+          if (Math.random() < 0.3) {
+            const statuses: SystemStatus[] = ['Normal', 'Warning', 'Critical'];
+            const weights = [0.6, 0.3, 0.1];
+            
+            const rand = Math.random();
+            let cumulativeWeight = 0;
+            let selectedStatus = 'Normal' as SystemStatus;
+            
+            for (let i = 0; i < statuses.length; i++) {
+              cumulativeWeight += weights[i];
+              if (rand < cumulativeWeight) {
+                selectedStatus = statuses[i];
+                break;
+              }
+            }
+            
+            return {
+              ...conn,
+              status: selectedStatus
+            };
+          }
+          return conn;
+        }));
+        
+        // Slightly adjust risk percentage
+        const riskChange = (Math.random() * 20) - 10; // -10 to +10
+        setRiskPercentage(prev => Math.min(100, Math.max(0, prev + riskChange)));
       }
     };
 
@@ -794,7 +934,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [setShowRainfallAlert, setShowOptimizationAlert, setNodes, setConnections, setRiskPercentage]);
 
   return (
     <MapContext.Provider value={{ isMapExpanded, setMapExpanded }}>
@@ -822,6 +962,26 @@ function App() {
                 <AlertIcon>⚠️</AlertIcon>
                 Mujra expecting rainfall in the upcoming day ({getTomorrowsDate()})
               </RainfallAlert>
+            </>
+          )}
+          
+          {showOptimizationAlert && (
+            <>
+              <AlertBackdrop
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1 }}
+              />
+              <OptimizationAlert
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 50 }}
+              >
+                <SuccessIcon>✓</SuccessIcon>
+                Mujra quantum optimization process initiated successfully
+              </OptimizationAlert>
             </>
           )}
         </AnimatePresence>

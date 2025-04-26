@@ -37,6 +37,18 @@ const RiskValue = styled.div<{ percentage: number }>`
   margin-top: 0.5rem;
 `;
 
+const StatusMessage = styled.div<{ percentage: number }>`
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  font-weight: 500;
+  color: ${props => 
+    props.percentage < 30 ? colors.statusGood :
+    props.percentage < 70 ? colors.statusWarning :
+    colors.statusCritical
+  };
+  transition: color 0.3s ease;
+`;
+
 const RiskOverview = memo(({ riskPercentage }: RiskOverviewProps) => {
   // Use a separate smoothed state for display
   const [smoothValue, setSmoothValue] = useState(riskPercentage);
@@ -74,12 +86,25 @@ const RiskOverview = memo(({ riskPercentage }: RiskOverviewProps) => {
   // Format to two decimal places for display
   const formattedValue = smoothValue.toFixed(2);
   
+  // Get status message based on current risk
+  const getStatusMessage = (value: number) => {
+    if (value < 20) return "System operating optimally";
+    if (value < 30) return "Low risk conditions";
+    if (value < 50) return "Moderate risk level";
+    if (value < 70) return "Elevated risk - monitoring recommended";
+    if (value < 85) return "High risk - immediate action needed";
+    return "Critical risk - emergency protocols activated";
+  };
+  
   return (
     <div>
       <h2>Flooding Risk Overview</h2>
       <RiskValue percentage={smoothValue}>
         {formattedValue}%
       </RiskValue>
+      <StatusMessage percentage={smoothValue}>
+        {getStatusMessage(smoothValue)}
+      </StatusMessage>
       <RiskBar>
         <RiskFill
           percentage={smoothValue}
