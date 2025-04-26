@@ -1,11 +1,12 @@
 # NYUAD International Hackathon for Social Good in the Arab World: Quantum Computing (QC) and Artificial Intelligence (AI)
 
-# Mujra: Coral Reef Restoration Optimization
+# Mujra: Wastewater Routing Optimization
 
 ## Introduction
 
-QMarjan is a pioneering project combining classical computer vision (CV) techniques and quantum computing to optimize coral reef repopulation strategies, starting with the United Arab Emirates (UAE). By leveraging satellite imagery and quantum algorithms, QMarjan aims to address the global challenge of coral reef degradation.
+Mujra is a wastewater routing optimizer designed to help desert cities prevent urban flooding, overflow, and inefficiencies in aging drainage systems. It leverages hybrid quantum-classical algorithms to enable real-time optimization and visualization of water flow.
 
+https://ars.els-cdn.com/content/image/1-s2.0-S2352186423003565-gr4.jpg
 
 https://github.com/basil-ahmed/QMorjan-team17/assets/90772853/2f5a1e15-c5d4-490a-91b2-c51f10dfacda
 
