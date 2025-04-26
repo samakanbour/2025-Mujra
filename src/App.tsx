@@ -40,7 +40,7 @@ const Logo = styled.img`
 `;
 
 const Title = styled.h1`
-  color: ${colors.primary};
+  color: #72411d;
   font-size: 2rem;
   margin: 0;
 `;

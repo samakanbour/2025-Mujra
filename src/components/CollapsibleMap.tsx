@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { InteractiveMap } from './InteractiveMap';
 import { SensorNode, PipeConnection } from '../types';
-import { colors } from '../styles/global';
 import { MapContext } from '../App';
 import React from 'react';
 import { EmiratesSelector } from './EmiratesSelector';
