@@ -1,5 +1,6 @@
 export type SystemStatus = 'Normal' | 'Warning' | 'Critical';
 export type NodeType = 'Standard' | 'Flow' | 'Pressure' | 'Junction' | 'Pump';
+export type CityType = 'dubai' | 'sharjah' | 'abudhabi' | 'ajman' | 'ummalquwain' | 'rasalkhaimah' | 'fujairah';
 
 export interface SensorNode {
   id: string;
@@ -10,6 +11,7 @@ export interface SensorNode {
   riskValue?: number;
   pressure?: number;
   lastMaintenance?: string;
+  city?: CityType;
 }
 
 export interface PipeConnection {
@@ -21,6 +23,7 @@ export interface PipeConnection {
   diameter?: number;
   material?: string;
   age?: number;
+  city?: CityType;
 }
 
 export interface MapViewState {
