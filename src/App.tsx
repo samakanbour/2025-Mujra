@@ -1,29 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { GlobalStyle, colors } from './styles/global';
 import { SystemStatus, NodeType } from './types';
 import styled from '@emotion/styled';
 import { Global } from '@emotion/react';
-import { InteractiveMap } from './components/InteractiveMap';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CollapsibleMap } from './components/CollapsibleMap';
 import RiskOverview from './components/RiskOverview';
 import { SensorNode, PipeConnection } from './types';
 import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Create a context for the map state
+export const MapContext = createContext({
+  isMapExpanded: false,
+  setMapExpanded: (_value: boolean) => {}
+});
 
 const AppContainer = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
 `;
 
 const Navbar = styled.nav`
-  background-color: white;
+  background-color: #eeece6;
   padding: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+`;
+
+const Logo = styled.img`
+  height: 50px;
+  width: auto;
+  object-fit: contain;
 `;
 
 const Title = styled.h1`
   color: ${colors.primary};
   font-size: 2rem;
+  margin: 0;
 `;
 
 const StatusBar = styled.div<{ status: SystemStatus }>`
@@ -36,23 +55,251 @@ const StatusBar = styled.div<{ status: SystemStatus }>`
   padding: 0.5rem;
   text-align: center;
   font-weight: bold;
+  position: relative;
+  z-index: 20;
 `;
 
-const MapContainer = styled.div`
-  margin: 1rem;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 80vh;
+const SystemStatusBar = styled.div<{ status: SystemStatus }>`
+  background-color: ${props => 
+    props.status === 'Normal' ? colors.statusGood :
+    props.status === 'Warning' ? colors.statusWarning :
+    colors.statusCritical
+  };
+  color: white;
+  padding: 0.7rem;
+  text-align: center;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem auto;
+  border-radius: 8px;
+  width: 90%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const RainfallAlert = styled(motion.div)`
+  position: fixed;
+  inset: 0; /* top:0, bottom:0, left:0, right:0 */
+  margin: auto;
+  min-width: 340px;
+  max-width: 40vw;
+  height: fit-content;
+  background: rgba(255, 255, 255, 0.95);
+  border-left: 8px solid ${colors.statusWarning};
+  box-shadow: 0 12px 40px 0 rgba(0,0,0,0.35), 0 1.5px 8px 0 rgba(0,0,0,0.10);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 36px 28px 28px;
+  z-index: 9999;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${colors.statusCritical};
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  gap: 18px;
+  text-align: center;
+`;
+
+
+const AlertIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${colors.statusWarning};
+  color: #fff;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 1.7rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px 0 rgba(255, 193, 7, 0.18);
+`;
+
+// Add a backdrop overlay
+const AlertBackdrop = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 9998;
+  pointer-events: none;
+`;
+
+const MainContent = styled.div`
+  display: flex;
+  flex: 1;
   position: relative;
+  min-height: calc(100vh - 70px);
+  margin-top: 10px;
+`;
+
+const ContentContainer = styled.div`
+  padding: 1rem;
+  width: 50%;
+  transition: all 0.3s ease-in-out;
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+`;
+
+const MainPanel = styled.div<{ isMapExpanded?: boolean }>`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1rem;
+  width: 100%;
 `;
 
 const RiskPanel = styled.div`
   background-color: white;
   padding: 1rem;
-  margin: 1rem;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const AlertPanel = styled.div`
+  background-color: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const AlertTitle = styled.h3`
+  color: ${colors.textPrimary};
+  margin-top: 0;
+`;
+
+const AlertList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const AlertItem = styled.li<{ status: SystemStatus }>`
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border-left: 4px solid ${props => 
+    props.status === 'Normal' ? colors.statusGood :
+    props.status === 'Warning' ? colors.statusWarning :
+    colors.statusCritical
+  };
+  background-color: ${props => 
+    props.status === 'Normal' ? 'rgba(76, 175, 80, 0.1)' :
+    props.status === 'Warning' ? 'rgba(255, 152, 0, 0.1)' :
+    'rgba(244, 67, 54, 0.1)'
+  };
+`;
+
+const AlertHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const AlertLocation = styled.span`
+  font-weight: bold;
+`;
+
+const AlertTime = styled.span`
+  font-size: 0.9rem;
+  color: ${colors.textSecondary};
+`;
+
+const AlertMessage = styled.div`
+  color: ${colors.textPrimary};
+`;
+
+const StatsPanel = styled.div`
+  background-color: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+`;
+
+const StatsTitle = styled.h3`
+  color: ${colors.textPrimary};
+  margin-top: 0;
+`;
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 0 auto;
+  width: 90%;
+`;
+
+const StatItem = styled.div`
+  text-align: center;
+`;
+
+const StatValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: ${colors.primary};
+`;
+
+const StatLabel = styled.div`
+  font-size: 0.9rem;
+  color: ${colors.textSecondary};
+`;
+
+const SystemPanel = styled.div`
+  background-color: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const SystemTitle = styled.h3`
+  color: ${colors.textPrimary};
+  margin-top: 0;
+`;
+
+const SystemInfo = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+`;
+
+const SystemItem = styled.div`
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const StatusIndicator = styled.div<{ status: SystemStatus }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: ${props => 
+    props.status === 'Normal' ? colors.statusGood :
+    props.status === 'Warning' ? colors.statusWarning :
+    colors.statusCritical
+  };
+`;
+
+const SystemLabel = styled.div`
+  font-size: 0.9rem;
+  color: ${colors.textSecondary};
+`;
+
+const SystemValue = styled.div`
+  font-weight: bold;
+  color: ${colors.textPrimary};
 `;
 
 const OptimizeButton = styled.button`
@@ -93,6 +340,8 @@ function App() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus>('Normal');
   const [riskPercentage, setRiskPercentage] = useState(25);
   const [showOptimizeButton, setShowOptimizeButton] = useState(false);
+  const [isMapExpanded, setMapExpanded] = useState(false);
+  const [showRainfallAlert, setShowRainfallAlert] = useState(false);
 
   // Sample dynamic data for the map
   const initialNodes: SensorNode[] = [];
@@ -521,35 +770,170 @@ function App() {
     })));
   };
 
+  // Get tomorrow's date for the rainfall alert
+  const getTomorrowsDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'j') {
+        setShowRainfallAlert(true);
+        // Hide the alert after 5 seconds
+        setTimeout(() => {
+          setShowRainfallAlert(false);
+        }, 5000);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
-    <AppContainer>
-      <Global styles={GlobalStyle} />
-      <Navbar>
-        <Title>Majra</Title>
-      </Navbar>
-      <StatusBar status={systemStatus}>
-        System Status: {systemStatus}
-      </StatusBar>
-      <MapContainer>
-        <InteractiveMap 
-          nodes={nodes} 
-          connections={connections} 
-          initialViewState={{
-            longitude: baseLng,
-            latitude: baseLat,
-            zoom: 11.5 // Slightly zoom out to show more of the network
-          }}
-        />
-      </MapContainer>
-      <RiskPanel>
-        <RiskOverview riskPercentage={riskPercentage} />
-        {showOptimizeButton && (
-          <OptimizeButton onClick={handleOptimize}>
-            Optimize Flow
-          </OptimizeButton>
-        )}
-      </RiskPanel>
-    </AppContainer>
+    <MapContext.Provider value={{ isMapExpanded, setMapExpanded }}>
+      <AppContainer>
+        <Global styles={GlobalStyle} />
+        <Navbar>
+          <Logo src="/logo.png" alt="Mujra Logo" />
+          <Title>Mujra</Title>
+        </Navbar>
+        <AnimatePresence>
+          {showRainfallAlert && (
+            <>
+              <AlertBackdrop
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1 }}
+              />
+              <RainfallAlert
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 50 }}
+              >
+                <AlertIcon>⚠️</AlertIcon>
+                Mujra expecting rainfall in the upcoming day ({getTomorrowsDate()})
+              </RainfallAlert>
+            </>
+          )}
+        </AnimatePresence>
+        <MainContent>
+          <ContentContainer>
+            <MainPanel>
+              <SystemPanel>
+                <SystemTitle>System Health</SystemTitle>
+                <SystemInfo>
+                  {/* <SystemItem>
+                    <StatusIndicator status="Normal" />
+                    <SystemLabel>Quantum Solver:</SystemLabel>
+                    <SystemValue>Active</SystemValue>
+                  </SystemItem>
+                  <SystemItem>
+                    <StatusIndicator status="Normal" />
+                    <SystemLabel>Optimization Time:</SystemLabel>
+                    <SystemValue>0.15s</SystemValue>
+                  </SystemItem>
+                  <SystemItem>
+                    <StatusIndicator status="Normal" />
+                    <SystemLabel>Last Reaction:</SystemLabel>
+                    <SystemValue>12 sec ago</SystemValue>
+                  </SystemItem> */}
+                </SystemInfo>
+                <SystemStatusBar status={systemStatus}>
+                  System Status: {systemStatus}
+                </SystemStatusBar>
+              </SystemPanel>
+              
+              <StatsPanel>
+                <StatsTitle>Current Stats</StatsTitle>
+                <StatsGrid>
+                  <StatItem>
+                    <StatValue>12,706 m³/hr</StatValue>
+                    <StatLabel>Total Flow Volume</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>13.38 mm/hr</StatValue>
+                    <StatLabel>Rainfall Rate</StatLabel>
+                  </StatItem>
+                </StatsGrid>
+              </StatsPanel>
+              
+              <RiskPanel>
+                <RiskOverview riskPercentage={riskPercentage} />
+                {showOptimizeButton && (
+                  <OptimizeButton onClick={handleOptimize}>
+                    Optimize Network
+                  </OptimizeButton>
+                )}
+              </RiskPanel>
+              
+              <AlertPanel>
+                <AlertTitle>Alerts & Warnings</AlertTitle>
+                <AlertList>
+                  <AlertItem status="Warning">
+                    <AlertHeader>
+                      <AlertLocation>Zone B</AlertLocation>
+                      <AlertTime>1:36:38 PM</AlertTime>
+                    </AlertHeader>
+                    <AlertMessage>Mild flood risk in Zone B</AlertMessage>
+                  </AlertItem>
+                  <AlertItem status="Warning">
+                    <AlertHeader>
+                      <AlertLocation>Route 17</AlertLocation>
+                      <AlertTime>1:34:38 PM</AlertTime>
+                    </AlertHeader>
+                    <AlertMessage>Overflow detected in Route 17</AlertMessage>
+                  </AlertItem>
+                  <AlertItem status="Warning">
+                    <AlertHeader>
+                      <AlertLocation>Sector C</AlertLocation>
+                      <AlertTime>1:31:38 PM</AlertTime>
+                    </AlertHeader>
+                    <AlertMessage>Rising water levels in Sector C</AlertMessage>
+                  </AlertItem>
+                </AlertList>
+              </AlertPanel>
+                <SystemPanel>
+                  <SystemInfo>
+                    <SystemItem>
+                      <StatusIndicator status="Normal" />
+                      <SystemLabel>Quantum Solver:</SystemLabel>
+                      <SystemValue>Active</SystemValue>
+                    </SystemItem>
+                    <SystemItem>
+                      <StatusIndicator status="Normal" />
+                      <SystemLabel>Optimization Time:</SystemLabel>
+                      <SystemValue>0.15s</SystemValue>
+                    </SystemItem>
+                    <SystemItem>
+                      <StatusIndicator status="Normal" />
+                      <SystemLabel>Last Reaction:</SystemLabel>
+                      <SystemValue>12 sec ago</SystemValue>
+                    </SystemItem>
+                  </SystemInfo>
+                </SystemPanel>
+            </MainPanel>
+          </ContentContainer>
+          <CollapsibleMap 
+            nodes={nodes} 
+            connections={connections} 
+            initialViewState={{
+              longitude: baseLng,
+              latitude: baseLat,
+              zoom: 12.5
+            }}
+          />
+        </MainContent>
+      </AppContainer>
+    </MapContext.Provider>
   );
 }
 

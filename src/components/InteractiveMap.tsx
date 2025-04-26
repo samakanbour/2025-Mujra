@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Map, { Source, Layer, Marker, NavigationControl, Popup } from 'react-map-gl';
 import { motion } from 'framer-motion';
 import { SensorNode, PipeConnection, SystemStatus, NodeType, CityType } from '../types';
@@ -108,6 +108,8 @@ interface InteractiveMapProps {
     longitude: number;
     latitude: number;
     zoom: number;
+    width?: number;
+    height?: number;
   };
 }
 
@@ -199,9 +201,57 @@ export function InteractiveMap({ nodes, connections, initialViewState }: Interac
   const [popupInfo, setPopupInfo] = useState<SensorNode | null>(null);
   const [popupTimeout, setPopupTimeout] = useState<number | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapWrapperKey, setMapWrapperKey] = useState(0); // For forcing re-render
+  const [mapWrapperKey, setMapWrapperKey] = useState(0);
+  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const [currentCity, setCurrentCity] = useState<CityType>('dubai');
   const [showLegend, setShowLegend] = useState(true);
+  const [viewState, setViewState] = useState(initialViewState || {
+    longitude: 55.2708, // Dubai longitude
+    latitude: 25.2048,  // Dubai latitude
+    zoom: 11.5,
+  });
+
+  // Update map dimensions when container size changes
+  useEffect(() => {
+    const updateMapSize = () => {
+      if (mapContainerRef.current) {
+        const { width, height } = mapContainerRef.current.getBoundingClientRect();
+        setMapSize({ width, height });
+      }
+    };
+
+    updateMapSize();
+    const resizeObserver = new ResizeObserver(updateMapSize);
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Update viewState when size changes
+  useEffect(() => {
+    if (mapSize.width > 0 && mapSize.height > 0) {
+      setViewState(prev => ({
+        ...prev,
+        width: mapSize.width,
+        height: mapSize.height
+      }));
+    }
+  }, [mapSize]);
+
+  // Update viewState when initialViewState changes (for example when container resizes)
+  useEffect(() => {
+    if (initialViewState) {
+      setViewState(prev => ({
+        ...prev,
+        ...initialViewState
+      }));
+    }
+  }, [initialViewState]);
 
   // City view states
   const cityViewStates = {
@@ -554,125 +604,20 @@ export function InteractiveMap({ nodes, connections, initialViewState }: Interac
   const cityColor = getCityColor(currentCity);
 
   return (
-    <div key={mapWrapperKey} style={{ width: '100%', height: '100%' }}>
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        zIndex: 10,
-        background: 'white',
-        padding: '8px',
-        borderRadius: '4px',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        maxWidth: '380px'
-      }}>
-        <button 
-          onClick={() => handleCityChange('dubai')}
-          style={{
-            background: currentCity === 'dubai' ? getCityColor('dubai') : 'white',
-            color: currentCity === 'dubai' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Dubai
-        </button>
-        <button 
-          onClick={() => handleCityChange('abudhabi')}
-          style={{
-            background: currentCity === 'abudhabi' ? getCityColor('abudhabi') : 'white',
-            color: currentCity === 'abudhabi' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Abu Dhabi
-        </button>
-        <button 
-          onClick={() => handleCityChange('sharjah')}
-          style={{
-            background: currentCity === 'sharjah' ? getCityColor('sharjah') : 'white',
-            color: currentCity === 'sharjah' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Sharjah
-        </button>
-        <button 
-          onClick={() => handleCityChange('ajman')}
-          style={{
-            background: currentCity === 'ajman' ? getCityColor('ajman') : 'white',
-            color: currentCity === 'ajman' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Ajman
-        </button>
-        <button 
-          onClick={() => handleCityChange('ummalquwain')}
-          style={{
-            background: currentCity === 'ummalquwain' ? getCityColor('ummalquwain') : 'white',
-            color: currentCity === 'ummalquwain' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Umm Al Quwain
-        </button>
-        <button 
-          onClick={() => handleCityChange('rasalkhaimah')}
-          style={{
-            background: currentCity === 'rasalkhaimah' ? getCityColor('rasalkhaimah') : 'white',
-            color: currentCity === 'rasalkhaimah' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Ras Al Khaimah
-        </button>
-        <button 
-          onClick={() => handleCityChange('fujairah')}
-          style={{
-            background: currentCity === 'fujairah' ? getCityColor('fujairah') : 'white',
-            color: currentCity === 'fujairah' ? 'white' : colors.textPrimary,
-            border: 'none',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Fujairah
-        </button>
-      </div>
-      
+    <div 
+      ref={mapContainerRef}
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        position: 'relative',
+        overflow: 'hidden'
+      }} 
+      key={mapWrapperKey}
+    >
       {/* City info panel */}
       <div style={{
         position: 'absolute',
-        top: '90px',
+        top: '65px',
         left: '10px',
         zIndex: 10,
         background: 'white',
@@ -926,13 +871,19 @@ export function InteractiveMap({ nodes, connections, initialViewState }: Interac
       </div>
       
       <Map
-        initialViewState={defaultViewState}
-        style={{ width: '100%', height: '100%', borderRadius: '12px' }}
-        mapStyle="mapbox://styles/mapbox/light-v11" // Changed from satellite-streets-v12 to light-v11 for a simpler look
         mapboxAccessToken={mapboxToken}
+        initialViewState={viewState}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          borderRadius: '12px',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+        mapStyle="mapbox://styles/mapbox/light-v11"
         onClick={handleMapClick}
         onLoad={handleMapLoad}
         projection={'mercator' as any}
+        interactiveLayerIds={[`mainPipes-${currentCity}`, `secondaryPipes-${currentCity}`]}
       >
         <NavigationControl position="top-right" />
         
