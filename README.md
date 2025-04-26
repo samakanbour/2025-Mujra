@@ -1,12 +1,12 @@
 # NYUAD International Hackathon for Social Good in the Arab World: Quantum Computing (QC) and Artificial Intelligence (AI)
 
-# Mujra: Wastewater Routing Optimization
+# Mujra: Urban Drainage Network Topology Optimizer
 
 ## Introduction
 
-Mujra is a wastewater routing optimizer designed to help desert cities prevent urban flooding, overflow, and inefficiencies in aging drainage systems. It leverages hybrid quantum-classical algorithms to enable real-time optimization and visualization of water flow.
+Mujra is an urban drainage network topology optimizer that helps cities reduce the risk of flooding, overflows, and inefficiencies in aging drainage systems. It combines hybrid quantum-classical algorithms with AI to deliver real-time optimization and visualization of water flow.
 
-![alt text]([https://ars.els-cdn.com/content/image/1-s2.0-S2352186423003565-gr4.jpg](https://ars.els-cdn.com/content/image/1-s2.0-S0043135421010976-gr3_lrg.jpg))
+![alt text]([https://ars.els-cdn.com/content/image/1-s2.0-S2352186423003565-gr4.jpg](https://ars.els-cdn.com/content/image/1-s2.0-S0043135421010976-gr3_lrg.jpg)
 
 https://github.com/basil-ahmed/QMorjan-team17/assets/90772853/2f5a1e15-c5d4-490a-91b2-c51f10dfacda
 
