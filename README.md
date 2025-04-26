@@ -1,6 +1,6 @@
 # NYUAD International Hackathon for Social Good in the Arab World: Quantum Computing (QC) and Artificial Intelligence (AI)
 
-# Mujra: Urban Drainage Network Topology Optimizer
+# Team 11 - Mujra: Urban Drainage Network Topology Optimizer
 
 ## Introduction
 The مجرى is an urban drainage network topology optimizer that helps cities reduce the risk of flooding, overflows, and inefficiencies in aging drainage systems. It combines hybrid quantum-classical algorithms with AI to deliver real-time optimization and visualization of water flow.
@@ -26,12 +26,12 @@ Drainage networks are critical for urban resilience and public health, but are i
 | [Rohan Timmaraju](rt2970@columbia.edu)	| Student	| Freshman | Columbia University |	Australia, USA |
 | [Hala Awladmohammed](h.awladmohammed@student.aaup.edu)	|	Student	| Junior |	Arab American University | Jordan, Palestine |
 | [Anas Ibrahim](a23ibrah@uwaterloo.ca)	|	Student	|	Masters	|	University of Waterloo | Egypt, Canada |
-| [Dhruv Bhat](db4364@nyu.edu)	|	Student	 |	Bachelors	 |	Student Research Affiliate, Center for Quantum and Topological Systems at New York University Abu Dhabi	 |	India |
-| [Mahdia Toubal](mahdia.toubal@gmail.com)	|	Student	| Masters	 |	The Higher National School of Computer Science |	Algeria |
-| [Nahyan Alhosani](naa506@nyu.edu) | 	Student	 |	Junior | New York University Abu Dhabi |	UAE |
+| [Dhruv Bhat](db4364@nyu.edu)	|	Student	 |	Bachelors	 |	Student Research Affiliate, Center for Quantum and Topological Systems at New York University Abu Dhabi	|	India |
+| [Mahdia Toubal](mahdia.toubal@gmail.com)	|	Student	| Masters	| The Higher National School of Computer Science |	Algeria |
+| [Nahyan Alhosani](naa506@nyu.edu) | 	Student	 |	Junior | New York University Abu Dhabi | UAE |
 | [Shahram Chaudhry](sc9425@nyu.edu) | 	Student	Junior	0.0	New York University Abu Dhabi | Pakistan, UAE |
 | [Alex Baudoin Nguetsa Tankeu](anguetsa@aimsric.org) |	Student, Mentor | Masters	| African Institute for Mathematical Sciences - Research & Innovation Center | Cameroon, Rwanda |
-| [Sama Kanbour](samakanbour@gmail.com) | 	Mentor |	Senior	1.0	GE Aerospace  |	France, USA |
+| [Sama Kanbour](samakanbour@gmail.com) | 	Mentor |	Senior |	GE Aerospace  |	France, USA |
 | [Mohammed Alghadeer](mohammed.alghadeer@physics.ox.ac.uk)	|	Mentor |	PhD	 | University of Oxford |	Saudi Arabia, United Kingdom |
 | [Muhammad Kashif](muhammadkashif038@gmail.com) | Mentor | PhD | New York University Abu Dhabi | Pakistan, UAE |
 
