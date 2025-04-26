@@ -15,6 +15,10 @@ https://github.com/basil-ahmed/QMorjan-team17/assets/90772853/2f5a1e15-c5d4-490a
 
 Coral reefs are crucial for marine life and human economies, but are at risk due to climate change. QMarjan's approach uses advanced algorithms to identify the best locations for coral restoration and utilizes quantum computing to determine optimal repopulation strategies.
 
+## Presentation
+
+[Presentation](https://docs.google.com/presentation/d/1QvU6STsqRpExncq30ouulwNxy55LFzJAiTKUcZwIlGQ/edit?slide=id.g120cbbff307_0_0#slide=id.g120cbbff307_0_0)
+
 ## Classical Computer Vision Model
 
 ### Overview
