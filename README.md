@@ -22,7 +22,7 @@ Drainage networks are critical for urban resilience and public health, but are i
 
 ## Quantum Computing Model & Classical Computer Vision Model
 
-The classical computer vision (CV) model uses unsupervised learning with Gaussian Mixture Models (GMM) for real-time detection of drainage networks from UAE digital elevation models. The Quantum model employs Quantum Annealing to solve the Set Cover Problem for determining optimal coral repopulation points.
+The classical computer vision (CV) model uses unsupervised learning with Gaussian Mixture Models (GMM) for real-time detection of drainage networks from UAE digital elevation models. The Quantum model employs Quantum Annealing to solve the Set Cover Problem for determining optimal drainage repopulation points.
 
 ## Tech Stack
 
@@ -56,10 +56,10 @@ git clone https://github.com/your_github_username/qmarjan.git
 python drainage_detection.py --image_path /path/to/satellite/image
 ```
 
-The model requires an input graph representation of detected coral reefs from the Classical CV Model.
+The model requires an input graph representation of detected drainage from the Classical CV Model.
 
 ```bash
-python bitmap_things.ipynb.py --graph_path /path/to/coral_graph
+python bitmap_things.ipynb.py --graph_path /path/to/drainage_graph
 ```
 
 ## Output
