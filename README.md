@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Mujra is an urban drainage network topology optimizer that helps cities reduce the risk of flooding, overflows, and inefficiencies in aging drainage systems. It combines hybrid quantum-classical algorithms with AI to deliver real-time optimization and visualization of water flow.
+مجرى is an urban drainage network topology optimizer that helps cities reduce the risk of flooding, overflows, and inefficiencies in aging drainage systems. It combines hybrid quantum-classical algorithms with AI to deliver real-time optimization and visualization of water flow.
 
 ![alt text](https://ars.els-cdn.com/content/image/1-s2.0-S0043135421010976-gr3_lrg.jpg)
 
