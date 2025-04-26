@@ -64,14 +64,12 @@ python bitmap_things.ipynb.py --graph_path /path/to/coral_graph
 
 ## Output
 
-The algorithm provides a set of points representing the ideal locations for coral repopulation.
-
-The model outputs an image highlighting detected coral reefs and a CSV file with coordinates of detected areas.
+The quantum algorithm generates a set of points representing the optimal locations for drainage network interventions. The model outputs a visual map highlighting critical sections of the drainage system, along with a CSV file containing the coordinates of the identified areas.
 
 
 ## Data Visualization
 
-All the images (results) generated are present in the repository.
+All generated images (model output) are present in this repository.
 
 
 ## Roadmap
