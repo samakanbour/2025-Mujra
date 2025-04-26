@@ -28,11 +28,11 @@ Drainage networks are critical for urban resilience and public health, but are i
 | [Anas Ibrahim](a23ibrah@uwaterloo.ca)	|	Student	|	Masters	|	University of Waterloo | Egypt, Canada |
 | [Dhruv Bhat](db4364@nyu.edu)	|	Student	 |	Bachelors	 |	Student Research Affiliate, Center for Quantum and Topological Systems at New York University Abu Dhabi	|	India |
 | [Mahdia Toubal](mahdia.toubal@gmail.com)	|	Student	| Masters	| The Higher National School of Computer Science |	Algeria |
-| [Nahyan Alhosani](naa506@nyu.edu) | 	Student	 |	Junior | New York University Abu Dhabi | UAE |
-| [Shahram Chaudhry](sc9425@nyu.edu) | 	Student	 |	Junior |	New York University Abu Dhabi | Pakistan, UAE |
+| [Nahyan Alhosani](naa506@nyu.edu) | Student	 |	Junior | New York University Abu Dhabi | UAE |
+| [Shahram Chaudhry](sc9425@nyu.edu) | Student	 |	Junior |	New York University Abu Dhabi | Pakistan, UAE |
 | [Alex Baudoin Nguetsa Tankeu](anguetsa@aimsric.org) |	Student, Mentor | Masters	| African Institute for Mathematical Sciences - Research & Innovation Center | Cameroon, Rwanda |
-| [Sama Kanbour](samakanbour@gmail.com) | 	Mentor |	Bachelors |	GE Aerospace  |	France, USA |
-| [Mohammed Alghadeer](mohammed.alghadeer@physics.ox.ac.uk)	|	Mentor |	PhD	 | University of Oxford |	Saudi Arabia, United Kingdom |
+| [Sama Kanbour](samakanbour@gmail.com) | Mentor |	Bachelors |	GE Aerospace  |	France, USA |
+| [Mohammed Alghadeer](mohammed.alghadeer@physics.ox.ac.uk)	|	Mentor |	PhD	 | University of Oxford |	Saudi Arabia, UK |
 | [Muhammad Kashif](muhammadkashif038@gmail.com) | Mentor | PhD | New York University Abu Dhabi | Pakistan, UAE |
 
 ## Presentation
