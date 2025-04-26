@@ -74,8 +74,10 @@ All generated images (model output) are present in this repository.
 
 ## Roadmap
 
-- 6 months: Product validation with UAE MOCCAE and the "Dubai Reef" project.
-- 3+ years: Scale to 15+ countries with separate data management systems and bleaching forecasting.
+- 0–6 Months: Validate the product with UAE MOCCAE and Dubai Drainage Project; refine based on pilot feedback.
+- 6–18 Months: Expand across the Gulf region; enhance features with real-time analytics and risk alerts.
+- 18 Months–3 Years: Scale to 15+ countries with localized data systems and introduce drainage health forecasting.
+- 3–5 Years: Deploy full autonomous optimization and position as a global infrastructure resilience solution.
 
 
 ## Acknowledgments
