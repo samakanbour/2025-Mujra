@@ -6,7 +6,7 @@
 
 Mujra is a wastewater routing optimizer designed to help desert cities prevent urban flooding, overflow, and inefficiencies in aging drainage systems. It leverages hybrid quantum-classical algorithms to enable real-time optimization and visualization of water flow.
 
-https://ars.els-cdn.com/content/image/1-s2.0-S2352186423003565-gr4.jpg
+![alt text](https://ars.els-cdn.com/content/image/1-s2.0-S2352186423003565-gr4.jpg)
 
 https://github.com/basil-ahmed/QMorjan-team17/assets/90772853/2f5a1e15-c5d4-490a-91b2-c51f10dfacda
 
