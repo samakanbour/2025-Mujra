@@ -1,0 +1,14 @@
+[
+    {"zone": "Deira", "lat": 25.276987, "lon": 55.296249, "elevation": 4, "urban_density": 2},
+    {"zone": "Bur Dubai", "lat": 25.253174, "lon": 55.297916, "elevation": 3.5, "urban_density": 2},
+    {"zone": "Dubai Marina", "lat": 25.080000, "lon": 55.140000, "elevation": 6, "urban_density": 2},
+    {"zone": "Jebel Ali", "lat": 25.010160, "lon": 55.062446, "elevation": 11, "urban_density": 0},
+    {"zone": "Expo 2020 Site", "lat": 24.953510, "lon": 55.038000, "elevation": 12, "urban_density": 0},
+    {"zone": "Downtown Dubai", "lat": 25.197197, "lon": 55.274376, "elevation": 5, "urban_density": 2},
+    {"zone": "Dubai Creek Harbour", "lat": 25.204849, "lon": 55.342674, "elevation": 3, "urban_density": 2},
+    {"zone": "Al Quoz Industrial", "lat": 25.135700, "lon": 55.231100, "elevation": 7, "urban_density": 1},
+    {"zone": "Dubai Silicon Oasis", "lat": 25.121200, "lon": 55.377300, "elevation": 9, "urban_density": 1},
+    {"zone": "Mirdif", "lat": 25.220300, "lon": 55.416200, "elevation": 8, "urban_density": 1},
+    {"zone": "Al Barsha", "lat": 25.107800, "lon": 55.207700, "elevation": 7.5, "urban_density": 1},
+    {"zone": "International City", "lat": 25.163400, "lon": 55.417900, "elevation": 6.5, "urban_density": 1}
+]
