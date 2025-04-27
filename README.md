@@ -9,7 +9,8 @@ The مجرى is an urban drainage network topology optimizer that helps cities r
 
 
 ## Demo
-https://github.com/basil-ahmed/QMorjan-team17/assets/90772853/2f5a1e15-c5d4-490a-91b2-c51f10dfacda
+https://github.com/user-attachments/assets/1bd17209-0432-4425-aeb1-3ee3edb312aa
+
 
 
 ## Background
