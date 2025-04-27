@@ -1,0 +1,13 @@
+Zone,Relative_Humidity,Wind_Speed,Cloud_Coverage,Bright_Sunshine,Avg Temp,Elevation,Urban Density,Rainfall,Flood Probability,Flood Risk Color
+Dubai Marina,88,2,0.85,3,30,6.0,2,60,1.0,Red
+Downtown Dubai,86,2,0.8,3,29,5.0,2,58,1.0,Red
+Dubai Creek Harbour,82,2,0.75,4,31,3.0,2,50,1.0,Red
+Al Quoz Industrial,80,2,0.7,4,33,7.0,1,52,1.0,Red
+Jebel Ali,74,3,0.6,5,28,11.0,0,45,0.43,Yellow
+Dubai Silicon Oasis,63,4,0.55,6,34,9.0,1,40,0.41,Yellow
+Al Barsha,65,4,0.5,7,30,7.5,1,44,0.59,Yellow
+International City,50,3,0.6,6,29,6.5,1,40,0.29,Green
+Mirdif,50,4,0.3,8,28,8.0,1,20,0.0,Green
+Expo 2020 Site,47,4,0.3,9,34,12.0,0,18,0.0,Green
+Deira,48,4,0.3,8,32,4.0,2,22,0.19,Green
+Bur Dubai,50,3,0.25,8,31,3.5,2,24,0.1,Green
