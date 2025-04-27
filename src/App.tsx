@@ -374,6 +374,36 @@ const getDistance = (pos1: [number, number], pos2: [number, number]): number => 
   return R * c;
 };
 
+// Calculate system status based on nodes, connections and risk percentage
+const calculateSystemStatus = (
+  nodes: SensorNode[],
+  connections: PipeConnection[],
+  riskPercentage: number
+): SystemStatus => {
+  // Count critical and warning nodes
+  const criticalNodes = nodes.filter(n => n.status === 'Critical').length;
+  const warningNodes = nodes.filter(n => n.status === 'Warning').length;
+  const totalNodes = nodes.length;
+  
+  // Calculate percentage of problematic nodes
+  const problematicPercentage = ((criticalNodes * 3) + warningNodes) / totalNodes * 100;
+  
+  // Create a weighted score - both from risk percentage and node statuses
+  const nodeStatusWeight = 0.6; // 60% weight for node status
+  const floodingRiskWeight = 0.4; // 40% weight for flooding risk
+  
+  const combinedScore = (problematicPercentage * nodeStatusWeight) + (riskPercentage * floodingRiskWeight);
+  
+  // Determine system status based on the combined score
+  if (combinedScore > 60 || riskPercentage > 80 || criticalNodes > totalNodes * 0.15) {
+    return 'Critical';
+  } else if (combinedScore > 30 || riskPercentage > 50 || warningNodes > totalNodes * 0.25) {
+    return 'Warning';
+  } else {
+    return 'Normal';
+  }
+};
+
 function App() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus>('Normal');
   const [riskPercentage, setRiskPercentage] = useState(25);
@@ -381,6 +411,7 @@ function App() {
   const [isMapExpanded, setMapExpanded] = useState(false);
   const [showRainfallAlert, setShowRainfallAlert] = useState(false);
   const [showOptimizationAlert, setShowOptimizationAlert] = useState(false);
+  const [optimizationImpact, setOptimizationImpact] = useState(0);
 
   // Sample dynamic data for the map
   const initialNodes: SensorNode[] = [];
@@ -718,47 +749,58 @@ function App() {
   // Simulate status changes and risk updates
   useEffect(() => {
     const interval = setInterval(() => {
-      // Change system status occasionally (not every interval)
-      if (Math.random() < 0.2) {
-        const statuses: SystemStatus[] = ['Normal', 'Warning', 'Critical'];
-        const weights = [0.7, 0.2, 0.1]; // Weighted probabilities
-        
-        // Select status based on weights
-        const rand = Math.random();
-        let cumulativeWeight = 0;
-        let selectedStatus = 'Normal' as SystemStatus;
-        
-        for (let i = 0; i < statuses.length; i++) {
-          cumulativeWeight += weights[i];
-          if (rand < cumulativeWeight) {
-            selectedStatus = statuses[i];
-            break;
-          }
-        }
-        
-        setSystemStatus(selectedStatus);
-      }
-
-      // Simulate risk changes with smaller, smoother fluctuations
-      const riskChange = (Math.random() * 0.8 - 0.4); // Very small fluctuation (-0.4 to +0.4)
-      const newRisk = Math.min(100, Math.max(0, riskPercentage + riskChange));
-      setRiskPercentage(newRisk);
-
+      // Count nodes by status for flooding risk calculation
+      const criticalCount = nodes.filter(n => n.status === 'Critical').length;
+      const warningCount = nodes.filter(n => n.status === 'Warning').length;
+      const totalNodes = nodes.length;
+      
+      // Calculate base risk percentage from node statuses (0-100)
+      const nodeBasedRisk = ((criticalCount * 100) + (warningCount * 50)) / (totalNodes * 1.5);
+      
+      // Add small random fluctuation for more natural behavior (-1 to +1)
+      const riskFluctuation = (Math.random() * 2) - 1;
+      
+      // Calculate new flooding risk with weighted average - 70% from nodes, 30% from previous risk plus fluctuation
+      const calculatedRisk = Math.min(100, Math.max(0, 
+        (nodeBasedRisk * 0.7) + (riskPercentage * 0.3) + riskFluctuation
+      ));
+      
+      // Update risk percentage based on calculation
+      setRiskPercentage(calculatedRisk);
+      
+      // Calculate system status from nodes and risk percentage
+      const calculatedSystemStatus = calculateSystemStatus(nodes, connections, calculatedRisk);
+      setSystemStatus(calculatedSystemStatus);
+      
       // Show optimize button if risk is high
-      setShowOptimizeButton(newRisk > 70);
-
+      setShowOptimizeButton(calculatedRisk > 70);
+      
       // Occasionally update node statuses (not every node every time)
       setNodes(prevNodes => prevNodes.map(node => {
-        // Higher chance of issues for older infrastructure
+        // Higher chance of issues for older infrastructure and when flood risk is higher
         const nodeConnection = connections.find(c => c.startNode === node.id || c.endNode === node.id);
         const age = nodeConnection?.age || 5;
-        const failureProbability = Math.min(0.01 + (age / 200), 0.15); // Higher chance with age
+        // Increase failure probability based on flood risk
+        const floodRiskFactor = calculatedRisk / 100; // 0-1 scale
+        const failureProbability = Math.min(0.01 + (age / 200) + (floodRiskFactor * 0.2), 0.25);
         
-        if (Math.random() < failureProbability) {
-          return {
-            ...node,
-            status: getRandomItem(['Warning', 'Critical'] as SystemStatus[])
-          };
+        // Flood-prone areas (low elevation areas) are more affected by high flood risk
+        const isFloodProneArea = node.id.includes('Downtown') || 
+                                 node.id.includes('Marina') || 
+                                 node.id.includes('Jumeirah');
+        
+        // Adjust probability based on area susceptibility
+        const adjustedProbability = isFloodProneArea ? 
+                                   failureProbability * 1.5 : 
+                                   failureProbability;
+        
+        if (Math.random() < adjustedProbability) {
+          // Higher flooding risk increases chance of critical status
+          if (calculatedRisk > 70 && Math.random() < 0.6) {
+            return { ...node, status: 'Critical' };
+          } else {
+            return { ...node, status: getRandomItem(['Warning', 'Critical'] as SystemStatus[]) };
+          }
         } else if (Math.random() < 0.05) {
           return {
             ...node,
@@ -770,14 +812,29 @@ function App() {
       
       // Occasionally update connection statuses
       setConnections(prevConnections => prevConnections.map(conn => {
-        // Connections are more likely to have issues if they're older
-        const failureProbability = Math.min(0.005 + (conn.age || 0) / 300, 0.1);
+        // Connections are more likely to have issues if they're older and if flooding risk is higher
+        const floodRiskFactor = calculatedRisk / 100; // 0-1 scale
+        const failureProbability = Math.min(0.005 + (conn.age || 0) / 300 + (floodRiskFactor * 0.15), 0.2);
         
-        if (Math.random() < failureProbability) {
-          return {
-            ...conn,
-            status: getRandomItem(['Warning', 'Critical'] as SystemStatus[])
-          };
+        // Get the nodes this connection links
+        const startNode = nodes.find(n => n.id === conn.startNode);
+        const endNode = nodes.find(n => n.id === conn.endNode);
+        
+        // Connection is more likely to have issues if its nodes have issues
+        const nodeIssueMultiplier = 
+          (startNode?.status === 'Critical' || endNode?.status === 'Critical') ? 2.0 :
+          (startNode?.status === 'Warning' || endNode?.status === 'Warning') ? 1.5 : 1.0;
+        
+        // Final adjusted probability
+        const adjustedProbability = failureProbability * nodeIssueMultiplier;
+        
+        if (Math.random() < adjustedProbability) {
+          // Higher flooding risk increases chance of critical status
+          if (calculatedRisk > 70 && Math.random() < 0.5) {
+            return { ...conn, status: 'Critical' };
+          } else {
+            return { ...conn, status: getRandomItem(['Warning', 'Critical'] as SystemStatus[]) };
+          }
         } else if (Math.random() < 0.03) {
           return {
             ...conn,
@@ -792,21 +849,95 @@ function App() {
     return () => clearInterval(interval);
   }, [riskPercentage, connections]);
 
+  // Make risk update also affect node statuses 
+  useEffect(() => {
+    // If risk is high, make nodes more likely to have issues
+    if (riskPercentage > 70) {
+      setNodes(prevNodes => prevNodes.map(node => {
+        if (Math.random() < 0.2) { // 20% chance to worsen node status when risk is high
+          if (node.status === 'Normal') return { ...node, status: 'Warning' };
+          if (node.status === 'Warning') return { ...node, status: 'Critical' };
+          return node;
+        }
+        return node;
+      }));
+    }
+  }, [riskPercentage]);
+
   const handleOptimize = () => {
-    // Simulate optimization
-    setRiskPercentage(prev => Math.max(0, prev - 30));
+    // Store current risk to calculate the impact
+    const currentRisk = riskPercentage;
+    
+    // Simulate optimization - reduce risk and fix node statuses
+    setRiskPercentage(prev => {
+      const newRisk = Math.max(0, prev - 30);
+      setOptimizationImpact(currentRisk - newRisk);
+      return newRisk;
+    });
     setShowOptimizeButton(false);
     
     // Fix statuses of problematic nodes and connections
     setNodes(prevNodes => prevNodes.map(node => ({
       ...node,
-      status: node.status === 'Critical' ? 'Normal' : node.status
+      status: node.status === 'Critical' ? 'Warning' : node.status === 'Warning' ? 'Normal' : node.status
     })));
     
     setConnections(prevConnections => prevConnections.map(conn => ({
       ...conn,
-      status: conn.status === 'Critical' ? 'Normal' : conn.status
+      status: conn.status === 'Critical' ? 'Warning' : conn.status === 'Warning' ? 'Normal' : conn.status
     })));
+    
+    // Update system status after optimization
+    setSystemStatus('Normal');
+    
+    // Show optimization alert only when initiating
+    setShowOptimizationAlert(true);
+    setTimeout(() => {
+      setShowOptimizationAlert(false);
+    }, 2000);
+    
+    // Create a protection period where the system stays optimized
+    const protectionPeriod = 30000; // 30 seconds of stability
+    const optimizationTime = Date.now();
+    
+    // Create an interval to check if we're still in the protection period
+    const protectionInterval = setInterval(() => {
+      // If we're still within the protection period, reset any critical nodes
+      if (Date.now() - optimizationTime < protectionPeriod) {
+        setNodes(prevNodes => prevNodes.map(node => {
+          if (node.status === 'Critical') {
+            return { ...node, status: 'Warning' };
+          }
+          // 90% chance to maintain stability for Warning nodes too
+          if (node.status === 'Warning' && Math.random() < 0.9) {
+            return { ...node, status: 'Normal' };
+          }
+          return node;
+        }));
+        
+        // Also keep connections stable
+        setConnections(prevConnections => prevConnections.map(conn => {
+          if (conn.status === 'Critical') {
+            return { ...conn, status: 'Warning' };
+          }
+          // 80% chance to maintain stability for Warning connections
+          if (conn.status === 'Warning' && Math.random() < 0.8) {
+            return { ...conn, status: 'Normal' };
+          }
+          return conn;
+        }));
+        
+        // Keep risk percentage relatively low
+        setRiskPercentage(prev => {
+          // Allow small fluctuations but keep it low
+          const fluctuation = (Math.random() * 4) - 2; // -2 to +2
+          return Math.max(15, Math.min(35, prev + fluctuation));
+        });
+      } else {
+        // Once protection period is over, clear the interval
+        clearInterval(protectionInterval);
+      }
+    }, 1000);
   };
 
   // Get tomorrow's date for the rainfall alert
@@ -823,19 +954,52 @@ function App() {
         // 1st: Show rainfall warning alert for 2 seconds
         setShowRainfallAlert(true);
         
-        // Make nodes and connections red (warning status) to show rainfall impact
-        setNodes(prevNodes => prevNodes.map(node => ({
-          ...node,
-          status: 'Warning'
-        })));
-        
-        setConnections(prevConnections => prevConnections.map(conn => ({
-          ...conn,
-          status: 'Warning'
-        })));
+        // Calculate how much to increase risk based on current system status
+        const riskIncrease = systemStatus === 'Critical' ? 15 : systemStatus === 'Warning' ? 25 : 35;
         
         // Increase risk percentage to show impact of rainfall
-        setRiskPercentage(prev => Math.min(85, prev + 30));
+        setRiskPercentage(prev => {
+          const newRisk = Math.min(95, prev + riskIncrease);
+          return newRisk;
+        });
+        
+        // Make flood-prone nodes more severely affected
+        setNodes(prevNodes => prevNodes.map(node => {
+          const isFloodProneArea = node.id.includes('Downtown') || 
+                                 node.id.includes('Marina') || 
+                                 node.id.includes('Jumeirah');
+          
+          if (isFloodProneArea) {
+            // 80% chance of critical status in flood-prone areas
+            return { 
+              ...node, 
+              status: Math.random() < 0.8 ? 'Critical' : 'Warning'
+            };
+          } else {
+            // Other areas mostly get warning status
+            return { 
+              ...node, 
+              status: Math.random() < 0.3 ? 'Critical' : 'Warning'
+            };
+          }
+        }));
+        
+        // Update connections based on the nodes they connect
+        setConnections(prevConnections => prevConnections.map(conn => {
+          // Get the nodes this connection links
+          const startNode = nodes.find(n => n.id === conn.startNode);
+          const endNode = nodes.find(n => n.id === conn.endNode);
+          
+          // If either node is critical, connection has high chance of being critical
+          if (startNode?.status === 'Critical' || endNode?.status === 'Critical') {
+            return { ...conn, status: Math.random() < 0.7 ? 'Critical' : 'Warning' };
+          } else {
+            return { ...conn, status: 'Warning' };
+          }
+        }));
+        
+        // Update system status to reflect the change
+        setSystemStatus('Critical');
         
         // After 2 seconds, hide rainfall alert and show optimization alert
         setTimeout(() => {
@@ -844,26 +1008,79 @@ function App() {
           // 2nd: Show the quantum optimization success alert
           setShowOptimizationAlert(true);
           
+          // Store current risk to calculate impact
+          const currentRisk = riskPercentage;
+          
           // After 2 seconds, hide optimization alert
           setTimeout(() => {
             setShowOptimizationAlert(false);
             
-            // 3rd: Wait 10s and turn everything green
+            // 3rd: Wait 5s and optimize the system
             setTimeout(() => {
-              // Set all nodes and connections to Normal (green)
+              // Calculate optimization impact
+              setOptimizationImpact(currentRisk - Math.max(20, currentRisk - 50));
+              
+              // Set all nodes to improved status
               setNodes(prevNodes => prevNodes.map(node => ({
                 ...node,
-                status: 'Normal'
+                status: node.status === 'Critical' ? 'Warning' : 'Normal'
               })));
               
+              // Improve connection statuses
               setConnections(prevConnections => prevConnections.map(conn => ({
                 ...conn,
-                status: 'Normal'
+                status: conn.status === 'Critical' ? 'Warning' : 'Normal'
               })));
               
-              // Decrease risk percentage dramatically to show impact of optimization
-              setRiskPercentage(prev => Math.max(10, prev - 50));
-            }, 10000); // 10 seconds wait
+              // Decrease risk percentage to show impact of optimization
+              setRiskPercentage(prev => Math.max(20, prev - 50));
+              
+              // Update system status
+              setSystemStatus('Normal');
+              
+              // Create a protection period where the system stays optimized
+              const protectionPeriod = 30000; // 30 seconds of stability
+              const optimizationTime = Date.now();
+              
+              // Create an interval to check if we're still in the protection period
+              const protectionInterval = setInterval(() => {
+                // If we're still within the protection period, reset any critical nodes
+                if (Date.now() - optimizationTime < protectionPeriod) {
+                  setNodes(prevNodes => prevNodes.map(node => {
+                    if (node.status === 'Critical') {
+                      return { ...node, status: 'Warning' };
+                    }
+                    // 90% chance to maintain stability for Warning nodes too
+                    if (node.status === 'Warning' && Math.random() < 0.9) {
+                      return { ...node, status: 'Normal' };
+                    }
+                    return node;
+                  }));
+                  
+                  // Also keep connections stable
+                  setConnections(prevConnections => prevConnections.map(conn => {
+                    if (conn.status === 'Critical') {
+                      return { ...conn, status: 'Warning' };
+                    }
+                    // 80% chance to maintain stability for Warning connections
+                    if (conn.status === 'Warning' && Math.random() < 0.8) {
+                      return { ...conn, status: 'Normal' };
+                    }
+                    return conn;
+                  }));
+                  
+                  // Keep risk percentage relatively low
+                  setRiskPercentage(prev => {
+                    // Allow small fluctuations but keep it low
+                    const fluctuation = (Math.random() * 4) - 2; // -2 to +2
+                    return Math.max(15, Math.min(35, prev + fluctuation));
+                  });
+                } else {
+                  // Once protection period is over, clear the interval
+                  clearInterval(protectionInterval);
+                }
+              }, 1000);
+            }, 5000); // 5 seconds wait before optimization
           }, 2000); // 2 seconds for optimization alert
         }, 2000); // 2 seconds for rainfall alert
       }
@@ -960,7 +1177,7 @@ function App() {
                 transition={{ type: "spring", stiffness: 400, damping: 50 }}
               >
                 <AlertIcon>⚠️</AlertIcon>
-                Mujra expecting rainfall in the upcoming day ({getTomorrowsDate()})
+                Mujra expecting flood risk
               </RainfallAlert>
             </>
           )}
@@ -980,7 +1197,7 @@ function App() {
                 transition={{ type: "spring", stiffness: 400, damping: 50 }}
               >
                 <SuccessIcon>✓</SuccessIcon>
-                Mujra quantum optimization process initiated successfully
+                Mujra quantum optimization process initiated successfully: 
               </OptimizationAlert>
             </>
           )}
@@ -1008,10 +1225,50 @@ function App() {
                   </SystemItem> */}
                 </SystemInfo>
                 <SystemStatusBar status={systemStatus}>
-                  System Status: {systemStatus}
+                  System Status: {systemStatus} {riskPercentage > 70 ? "- High Flooding Risk" : 
+                  riskPercentage > 50 ? "- Moderate Flooding Risk" : 
+                  riskPercentage > 30 ? "- Low Flooding Risk" : "- Normal Conditions"}
                 </SystemStatusBar>
               </SystemPanel>
               
+              {/* <StatsPanel>
+                <StatsTitle>Current Stats</StatsTitle>
+                <StatsGrid>
+                  <StatItem>
+                    <StatValue>12,706 m³/hr</StatValue>
+                    <StatLabel>Total Flow Volume</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>13.38 mm/hr</StatValue>
+                    <StatLabel>Rainfall Rate</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{nodes.filter(n => n.status === 'Critical').length}</StatValue>
+                    <StatLabel>Critical Nodes</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{nodes.filter(n => n.status === 'Warning').length}</StatValue>
+                    <StatLabel>Warning Nodes</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{(riskPercentage * 0.23 + 9.7).toFixed(2)} mm/hr</StatValue>
+                    <StatLabel>Water Level Rise</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{Math.max(0, (riskPercentage - 20) * 2).toFixed(0)}%</StatValue>
+                    <StatLabel>System Pressure</StatLabel>
+                  </StatItem>
+                </StatsGrid>
+              </StatsPanel> */}
+              
+              <RiskPanel>
+                <RiskOverview riskPercentage={riskPercentage} />
+                {showOptimizeButton && (
+                  <OptimizeButton onClick={handleOptimize}>
+                    Optimize Network
+                  </OptimizeButton>
+                )}
+              </RiskPanel>
               <StatsPanel>
                 <StatsTitle>Current Stats</StatsTitle>
                 <StatsGrid>
@@ -1023,18 +1280,24 @@ function App() {
                     <StatValue>13.38 mm/hr</StatValue>
                     <StatLabel>Rainfall Rate</StatLabel>
                   </StatItem>
+                  <StatItem>
+                    <StatValue>{nodes.filter(n => n.status === 'Critical').length}</StatValue>
+                    <StatLabel>Critical Nodes</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{nodes.filter(n => n.status === 'Warning').length}</StatValue>
+                    <StatLabel>Warning Nodes</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{(riskPercentage * 0.23 + 9.7).toFixed(2)} mm/hr</StatValue>
+                    <StatLabel>Water Level Rise</StatLabel>
+                  </StatItem>
+                  <StatItem>
+                    <StatValue>{Math.max(0, (riskPercentage - 20) * 2).toFixed(0)}%</StatValue>
+                    <StatLabel>System Pressure</StatLabel>
+                  </StatItem>
                 </StatsGrid>
               </StatsPanel>
-              
-              <RiskPanel>
-                <RiskOverview riskPercentage={riskPercentage} />
-                {showOptimizeButton && (
-                  <OptimizeButton onClick={handleOptimize}>
-                    Optimize Network
-                  </OptimizeButton>
-                )}
-              </RiskPanel>
-              
               <AlertPanel>
                 <AlertTitle>Alerts & Warnings</AlertTitle>
                 <AlertList>
@@ -1064,19 +1327,19 @@ function App() {
                 <SystemPanel>
                   <SystemInfo>
                     <SystemItem>
-                      <StatusIndicator status="Normal" />
+                      <StatusIndicator status="Warning" />
                       <SystemLabel>Quantum Solver:</SystemLabel>
-                      <SystemValue>Active</SystemValue>
+                      <SystemValue>Armed</SystemValue>
                     </SystemItem>
                     <SystemItem>
                       <StatusIndicator status="Normal" />
-                      <SystemLabel>Optimization Time:</SystemLabel>
-                      <SystemValue>0.15s</SystemValue>
+                      <SystemLabel>Last Optimization Time:</SystemLabel>
+                      <SystemValue>0.12s</SystemValue>
                     </SystemItem>
                     <SystemItem>
                       <StatusIndicator status="Normal" />
                       <SystemLabel>Last Reaction:</SystemLabel>
-                      <SystemValue>12 sec ago</SystemValue>
+                      <SystemValue>3 sec ago</SystemValue>
                     </SystemItem>
                   </SystemInfo>
                 </SystemPanel>
