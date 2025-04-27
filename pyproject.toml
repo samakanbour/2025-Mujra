@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dwave-system>=1.30.0",
     "ipykernel>=6.29.5",
     "ipython>=9.2.0",
     "matplotlib>=3.10.1",
